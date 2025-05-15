@@ -1,0 +1,73 @@
+{
+  "nodes": [
+    { "id": "cloud1", "category": "compute", "type": "cloud", "pos": [0, 80], "attributes": { "cpu": 64, "ram": 256 , "disk":512}},
+    { "id": "cloud2", "category": "compute", "type": "cloud", "pos": [40, 80], "attributes": { "cpu": 64, "ram": 256, "disk":512 }},
+
+    { "id": "fog1", "category": "compute", "type": "fog", "pos": [-10, 60], "attributes": { "cpu": 16, "ram": 64 ,"disk":512}},
+    { "id": "fog2", "category": "compute", "type": "fog", "pos": [10, 60], "attributes": { "cpu": 16, "ram": 64 ,"disk":512}},
+    { "id": "fog3", "category": "compute", "type": "fog", "pos": [40, 60], "attributes": { "cpu": 16, "ram": 64 ,"disk":512}},
+
+    { "id": "edge1", "category": "compute", "type": "edge", "pos": [-10, 40], "attributes": { "cpu": 8, "ram": 16, "disk":512 }},
+    { "id": "edge2", "category": "compute", "type": "edge", "pos": [10, 40], "attributes": { "cpu": 8, "ram": 16 , "disk":512}},
+
+    { "id": "gw1", "category": "relay", "type": "gateway", "pos": [-15, 20], "attributes": { "max_connections": 15 }},
+    { "id": "gw2", "category": "relay", "type": "gateway", "pos": [-5, 20], "attributes": { "max_connections": 15 }},
+    { "id": "gw3", "category": "relay", "type": "gateway", "pos": [5, 20], "attributes": { "max_connections": 15 }},
+    { "id": "gw4", "category": "relay", "type": "gateway", "pos": [15, 20], "attributes": { "max_connections": 15 }},
+    { "id": "gw5", "category": "relay", "type": "gateway", "pos": [25, 20], "attributes": { "max_connections": 15 }},
+
+    { "id": "s1", "category": "device", "type": "sensor", "pos": [-17, 10], "attributes": { "unit": "C", "sampling_rate": 5 }},
+    { "id": "s2", "category": "device", "type": "sensor", "pos": [-16, 10], "attributes": { "unit": "C", "sampling_rate": 5 }},
+    { "id": "s3", "category": "device", "type": "sensor", "pos": [-15, 10], "attributes": { "unit": "C", "sampling_rate": 5 }},
+    { "id": "s4", "category": "device", "type": "sensor", "pos": [-14, 10], "attributes": { "unit": "C", "sampling_rate": 5 }},
+
+    { "id": "s5", "category": "device", "type": "sensor", "pos": [-6, 10], "attributes": { "unit": "C", "sampling_rate": 10 }},
+    { "id": "s6", "category": "device", "type": "sensor", "pos": [-5, 10], "attributes": { "unit": "C", "sampling_rate": 10 }},
+    { "id": "s7", "category": "device", "type": "sensor", "pos": [-4, 10], "attributes": { "unit": "C", "sampling_rate": 10 }},
+    { "id": "s8", "category": "device", "type": "sensor", "pos": [-3, 10], "attributes": { "unit": "C", "sampling_rate": 10 }},
+
+    { "id": "v1", "category": "device", "type": "vehicle", "pos": [16, 10], "attributes": { "speed": 60 }},
+    { "id": "v2", "category": "device", "type": "vehicle", "pos": [17, 10], "attributes": { "speed": 55 }},
+
+    { "id": "so1", "category": "device", "type": "smartobject", "pos": [26, 10], "attributes": { "name": "wearable" }},
+    { "id": "so2", "category": "device", "type": "smartobject", "pos": [27, 10], "attributes": { "name": "watch" }},
+
+    { "id": "a1", "category": "device", "type": "actuator", "pos": [6, 10], "attributes": { "action": "open_valve" }},
+    { "id": "a2", "category": "device", "type": "actuator", "pos": [7, 10], "attributes": { "action": "close_valve" }}
+
+  ],
+  "links": [
+    { "s": "cloud1", "d": "fog1", "protocol": "optical_fiber" },
+    { "s": "cloud1", "d": "fog2", "protocol": "optical_fiber" },
+    { "s": "cloud2", "d": "fog3", "protocol": "optical_fiber" },
+
+    { "s": "fog1", "d": "edge1", "protocol": "ethernet" },
+    { "s": "fog2", "d": "edge2", "protocol": "ethernet" },
+    { "s": "fog3", "d": "edge2", "protocol": "ethernet" },
+
+    { "s": "edge1", "d": "gw1", "protocol": "ethernet" },
+    { "s": "edge1", "d": "gw2", "protocol": "ethernet" },
+    { "s": "edge2", "d": "gw3", "protocol": "ethernet" },
+    { "s": "edge2", "d": "gw4", "protocol": "ethernet" },
+    { "s": "edge2", "d": "gw5", "protocol": "ethernet" },
+
+    { "s": "gw1", "d": "s1", "protocol": "zigbee" },
+    { "s": "gw1", "d": "s2", "protocol": "zigbee" },
+    { "s": "gw1", "d": "s3", "protocol": "zigbee" },
+    { "s": "gw1", "d": "s4", "protocol": "zigbee" },
+
+    { "s": "gw2", "d": "s5", "protocol": "zigbee" },
+    { "s": "gw2", "d": "s6", "protocol": "zigbee" },
+    { "s": "gw2", "d": "s7", "protocol": "zigbee" },
+    { "s": "gw2", "d": "s8", "protocol": "zigbee" },
+
+    { "s": "gw3", "d": "a1", "protocol": "zwave" },
+    { "s": "gw3", "d": "a2", "protocol": "zwave" },
+
+    { "s": "gw4", "d": "v1", "protocol": "5G" },
+    { "s": "gw4", "d": "v2", "protocol": "5G" },
+
+    { "s": "gw5", "d": "so1", "protocol": "ble" },
+    { "s": "gw5", "d": "so2", "protocol": "ble" }
+  ]
+}
