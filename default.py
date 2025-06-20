@@ -1,3 +1,63 @@
+
+import random
+from enum import Enum
+from typing import Dict
+
+
+class NodeGroup(Enum):
+    SENSOR = "sensor"
+    ACTUATOR = "actuator"
+    SMART_OBJECT = "smartobject"
+    EDGE_NODE = "edgenode"
+    FOG_NODE = "fognode"
+    CLOUD = "cloud"
+
+    
+def generate_default_resources(group: 'NodeGroup') -> Dict[str, int]:
+    """
+    Generate default resources for a node based on its NodeGroup.
+
+    Units:
+        - cpu: MIPS (Million Instructions Per Second)
+        - ram: MB (Megabytes)
+        - disk: GB (Gigabytes)
+    """
+    if group in (NodeGroup.SENSOR, NodeGroup.ACTUATOR):
+        return {}
+
+    choices = {
+        NodeGroup.SMART_OBJECT: {
+            'cpu': [2**i for i in range(11, 14)],   # 2048–8192 MIPS
+            'ram': [2**i for i in range(12, 15)],   # 4096–16384 MB
+            'disk': [2**i for i in range(5, 9)]     # 32–256 GB
+        },
+        NodeGroup.EDGE_NODE: {
+            'cpu': [2**i for i in range(12, 14)],   # 4096–16384 MIPS
+            'ram': [2**i for i in range(12, 16)],   # 4096–65536 MB
+            'disk': [2**i for i in range(7, 10)]    # 128–1024 GB
+        },
+        NodeGroup.FOG_NODE: {
+            'cpu': [2**i for i in range(13, 16)],   # 8192–32768 MIPS
+            'ram': [2**i for i in range(13, 17)],   # 8192–65536 MB
+            'disk': [2**i for i in range(8, 12)]    # 256–2048 GB
+        },
+        NodeGroup.CLOUD: {
+            'cpu': [2**i for i in range(14, 17)],   # 16384–65536 MIPS
+            'ram': [2**i for i in range(16, 20)],   # 65536–524288 MB
+            'disk': [2**i for i in range(10, 14)]   # 1024–16384 GB
+        }
+    }
+
+    if group not in choices:
+        raise ValueError(f"Unsupported NodeGroup for resource generation: {group}")
+
+    group_choices = choices[group]
+    return {
+        key: random.choice(vals)
+        for key, vals in group_choices.items()
+    }
+
+
 PROTOCOLS = {
     "wifi_4":        {"BW": 54,      "tx_power": 1.5,      "rx_power": 1,        "idle_power": 0.8,     "sleep_power": 0.1   },
     "wifi_5":        {"BW": 1300,    "tx_power": 2,        "rx_power": 1.5,      "idle_power": 1,       "sleep_power": 0.2   },
@@ -10,13 +70,6 @@ PROTOCOLS = {
     "4G":            {"BW": 100,     "tx_power": 1,        "rx_power": 1,        "idle_power": 0.5,     "sleep_power": 0.1   },
     "5G":            {"BW": 10000,   "tx_power": 3,        "rx_power": 2,        "idle_power": 1.5,     "sleep_power": 0.3   },
     "nbiot":         {"BW": 0.25,    "tx_power": 0.1,      "rx_power": 0.1,      "idle_power": 0.05,    "sleep_power": 0.01  },
-    "optical_fiber": {"BW": 40000,   "tx_power": 10,       "rx_power": 10,       "idle_power": 5,       "sleep_power": 1     },
-    "ethernet":      {"BW": 40000,   "tx_power": 10,       "rx_power": 10,       "idle_power": 5,       "sleep_power": 1     }
-}
-
-DEFAULT_MOBILITY = {
-    "sensor":     False,
-    "actuator":   False,
-    "vehicle":    True,
-    "smartobject": False,
+    "optical_fiber": {"BW": 4000,   "tx_power": 10,       "rx_power": 10,       "idle_power": 5,       "sleep_power": 1     },
+    "ethernet":      {"BW": 4000,   "tx_power": 10,       "rx_power": 10,       "idle_power": 5,       "sleep_power": 1     }
 }
