@@ -10,8 +10,8 @@
       ],
       "resources": {
         "cpu": 32768,
-        "ram": 131072,
-        "disk": 4096
+        "memory": 131072,
+        "storage": 4096
       }
     },
     {
@@ -24,8 +24,8 @@
       ],
       "resources": {
         "cpu": 32768,
-        "ram": 131072,
-        "disk": 4096
+        "memory": 131072,
+        "storage": 4096
       }
     },
     {
@@ -38,8 +38,8 @@
       ],
       "resources": {
         "cpu": 16384,
-        "ram": 32768,
-        "disk": 1024
+        "memory": 32768,
+        "storage": 1024
       }
     },
     {
@@ -52,8 +52,8 @@
       ],
       "resources": {
         "cpu": 16384,
-        "ram": 32768,
-        "disk": 1024
+        "memory": 32768,
+        "storage": 1024
       }
     },
     {
@@ -66,8 +66,8 @@
       ],
       "resources": {
         "cpu": 16384,
-        "ram": 32768,
-        "disk": 1024
+        "memory": 32768,
+        "storage": 1024
       }
     },
     {
@@ -80,8 +80,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -94,8 +94,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -108,8 +108,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -122,8 +122,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -136,8 +136,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -150,8 +150,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -164,8 +164,8 @@
       ],
       "resources": {
         "cpu": 8192,
-        "ram": 16384,
-        "disk": 512
+        "memory": 16384,
+        "storage": 512
       }
     },
     {
@@ -250,8 +250,8 @@
       ],
       "resources": {
         "cpu": 4096,
-        "ram": 8192,
-        "disk": 128
+        "memory": 8192,
+        "storage": 128
       }
     },
     {
@@ -264,8 +264,8 @@
       ],
       "resources": {
         "cpu": 4096,
-        "ram": 8192,
-        "disk": 128
+        "memory": 8192,
+        "storage": 128
       }
     },
     {
@@ -278,8 +278,8 @@
       ],
       "resources": {
         "cpu": 4096,
-        "ram": 8192,
-        "disk": 128
+        "memory": 8192,
+        "storage": 128
       }
     },
     {
@@ -292,8 +292,8 @@
       ],
       "resources": {
         "cpu": 4096,
-        "ram": 8192,
-        "disk": 128
+        "memory": 8192,
+        "storage": 128
       }
     },
     {
