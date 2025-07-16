@@ -2,7 +2,7 @@
 from collections import defaultdict
 import logging
 
-from dataSelection import HighestVersionSelectionStrategy
+from dataSelection import HighestVersion
 logging.basicConfig(level=logging.INFO,format="[%(levelname)s] %(message)s")
 logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
@@ -74,25 +74,6 @@ class Core:
         
         logger.info(f"Registered application '{app.name}'")
         
-
-
-    # def place_service(
-    #     self,
-    #     app_name:     str,
-    #     service_name: str,
-    #     nodes:        List[Any]
-    # ):
-    #     """
-    #     Record where to deploy a given service of a given app.
-    #     """
-    #     if app_name not in self.apps:
-    #         raise KeyError(f"No such app {app_name!r}")
-    #     if service_name not in self.apps[app_name].services:
-    #         raise KeyError(f"No such service {service_name!r} in app {app_name!r}")
-    #     self.placement[(app_name, service_name)] = nodes
-        
-
-
 
 
     def send_message(self, msg: Message):
@@ -412,7 +393,7 @@ topo = Topology()
 topo.load_topology("topology.json")
 
 selection = ShortestPathSelectionStrategy()
-data_selection = HighestVersionSelectionStrategy()
+data_selection = HighestVersion()
 # 2) Create the Core and register your application
 core = Core(topology=topo, service_selection=selection, data_selection=data_selection)
 app  = Application(name="MyApp")
