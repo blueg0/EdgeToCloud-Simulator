@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Set, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core import Core
-    from ServicesManager import DeploymentManager
+    from servicesManager import DeploymentManager
 from distributions import ExponentialDistribution, DeterministicDistribution, UniformDistribution
 import simpy
 from enum import Enum, auto

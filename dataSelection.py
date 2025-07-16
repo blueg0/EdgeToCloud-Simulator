@@ -1,7 +1,15 @@
+from abc import ABC, abstractmethod
 from typing import Any, Dict
 import networkx as nx
 
-class HighestVersionSelectionStrategy:
+
+class DataSelection(ABC):
+    @abstractmethod
+    def select(): 
+        return
+    
+
+class HighestVersion(DataSelection):
 
     def select(self, candidates: Dict[Any,int], src_node: Any, topology: nx.Graph) -> Any:
         
