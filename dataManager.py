@@ -1,72 +1,81 @@
 # dataManager.py
 from abc import ABC, abstractmethod
-from typing import Any, List,TYPE_CHECKING, Optional
+from typing import Any, Dict, List, TYPE_CHECKING, Optional
+
 if TYPE_CHECKING:
     from core import Core
     from application import Data
+
 from Topology import StorageFullError
 from application import Message, MessageType
 
+
 class DataManager(ABC):
+    """
+    Abstract contract for data placement and deletion policies.
+    `placement` maps a data name to the list of node IDs that should hold replicas.
+    """
     def __init__(self):
-        self.placement = None        
-    @abstractmethod
-    def place_data(self, core : 'Core', data: 'Data', src_node) -> None:
-        """Place replicas of `data` on the given `nodes`."""
-    
-    @abstractmethod
-    def delete_data(self, data_name: str, node: Any) -> None:
-        """Delete the replica of `data_name` from `node`."""
-    
-    @abstractmethod
-    def tranfer_data(self, data_name: str) -> None:
-        """transfer a replica of `data_name` from `src_node` to `dst_node`."""
+        self.placement: Dict[str, List[str]] = {}
 
+    @abstractmethod
+    def change_placement(self, data_name: str, new_placement: List[str]) -> None:
+        """Update the replica set (node IDs) for a given data name."""
 
+    @abstractmethod
+    def place_data(self, core: 'Core', data: 'Data', src_node: str) -> None:
+        """Replicate freshly produced `data` according to `self.placement`."""
 
-        
+    @abstractmethod
+    def delete_data(
+        self,
+        core: 'Core',
+        node: str,
+        data_name: str,
+        version: Optional[int] = None
+    ) -> None:
+        """Delete `data_name` (optionally a specific `version`) from `node`."""
+
 
 class DefaultDataManager(DataManager):
-    
-    def __init__(self):
+    def __init__(self, data_placement: Dict[str, List[str]]):
         super().__init__()
-        
-    def set_placement(self,placement) : 
-        #for each data the nodes where it should be stored 
-        self.placement = placement
+        self.placement = data_placement or {}
 
-    def place_data(self,core: 'Core', data: 'Data', src_node):
-        for node_id in self.placement[data.name] : 
-            if node_id == src_node :
+    def change_placement(self, data_name: str, new_placement: List[str]) -> None:
+        self.placement[data_name] = list(new_placement or [])
+
+    def place_data(self, core: 'Core', data: 'Data', src_node: str) -> None:
+        targets = self.placement.get(data.name, [])
+        if not targets:
+            print(f"[STORE-SKIP] No placement defined for {data.name!r}")
+            return
+
+        for node_id in targets:
+            if node_id == src_node:
                 node_obj = core.topology.get_node(node_id)
                 try:
                     node_obj.store_data(data)
-                    
                     core.data_locations[data.name][src_node] = data.version
                 except StorageFullError as e:
                     print(f"[STORE-FAIL] {e}")
-            else : 
+            else:
+                # replicate via the network as a STORE control message
                 msg = Message(
                     src_node=src_node,
-                    dst_node= node_id, 
-                    data=data, 
+                    dst_node=node_id,
+                    data=data,
                     data_name=data.name,
                     size=data.size,
-                    message_type= MessageType.STORE)
-                
+                    message_type=MessageType.STORE,
+                )
                 core.send_message(msg)
 
-        return 
-    
-    def delete_data(self, core: 'Core', node: Any, data_name: str, version : Optional[int]= None ) -> None:
+    def delete_data(
+        self, core: 'Core', node: str, data_name: str, version: Optional[int] = None
+    ) -> None:
         node_obj = core.topology.get_node(node)
-        try: 
-            node_obj.delete_data(name=data_name, version=version )
-        except KeyError as e : 
+        try:
+            node_obj.delete_data(name=data_name, version=version)
+        except KeyError as e:
             print(f"[DELETE-FAIL] {e}")
-        
-
-    def tranfer_data(self, data_name, src_node, dst_node):
-        raise NotImplementedError("transfer_data() not implemented yet")
-
-

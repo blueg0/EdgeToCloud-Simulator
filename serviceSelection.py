@@ -6,7 +6,7 @@ from typing import List, Any, Optional, Dict
 import networkx as nx
 
 
-class SelectionStrategy(ABC):
+class ServiceSelection(ABC):
     """
     Base class for any node‐selection strategy.
     Users should override `select()` to implement their own logic.
@@ -35,14 +35,14 @@ class SelectionStrategy(ABC):
     
 
 
-class RandomSelectionStrategy(SelectionStrategy):
+class RandomSelectionStrategy(ServiceSelection):
     """Pick uniformly at random."""
 
     def select(self, candidates, src_node, topology, **kwargs):
         return random.choice(candidates)
 
 
-class FirstSelectionStrategy(SelectionStrategy):
+class FirstSelectionStrategy(ServiceSelection):
     """Always pick the first candidate."""
 
     def select(self, candidates, src_node, topology, **kwargs):
@@ -51,7 +51,7 @@ class FirstSelectionStrategy(SelectionStrategy):
         return candidates[0]
 
 
-class ShortestPathSelectionStrategy(SelectionStrategy):
+class ShortestPathSelectionStrategy(ServiceSelection):
     """
     Pick the candidate whose shortest‐path distance (using `weight`)
     from `src_node` is minimal.
