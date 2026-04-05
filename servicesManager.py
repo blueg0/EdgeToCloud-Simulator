@@ -69,7 +69,7 @@ class DictDeployment(ServicesManager):
 
             # record placement for everyone
             
-            core.placement[(app.name, svc_name)] = nodes
+            core.services_placement[(app.name, svc_name)] = nodes
             from application import GenerationService
             # if it’s a generator, also kick off generate() on each node
             if isinstance(svc, GenerationService):
@@ -95,7 +95,7 @@ class DictDeployment(ServicesManager):
 
             # 2) current placement list
             key = (app.name, svc_name)
-            placed = core.placement.get(key, [])
+            placed = core.services_placement.get(key, [])
 
             for node_id in nodes:
                 if node_id not in placed:
@@ -103,7 +103,7 @@ class DictDeployment(ServicesManager):
 
                 # 3) remove from routing/placement
                 placed.remove(node_id)
-                core.placement[key] = placed
+                core.services_placement[key] = placed
                 print(f"[SERVICE-REMOVED] '{svc_name}' @ {node_id}")
 
                 # 4) abort any SimPy Processes (both processors & generators)

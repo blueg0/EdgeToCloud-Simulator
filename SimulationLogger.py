@@ -33,6 +33,7 @@ class CSVLogger:
         Example row keys: timestamp, msg_id, event_type, src_service, ...
         """
         self._writer.writerow(row)
+        
 
     def close(self):
         """Flush and close the CSV file."""

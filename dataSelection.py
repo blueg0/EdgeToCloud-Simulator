@@ -31,4 +31,4 @@ class HighestVersion(DataSelection):
         # pick the node with minimal distance
         best = min(distances, key=distances.get)
         return best
-            
+

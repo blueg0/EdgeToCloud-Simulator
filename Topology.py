@@ -1,9 +1,10 @@
+from collections import defaultdict
 import json 
 import logging
 logging.getLogger(__name__).setLevel(logging.INFO)
 import simpy
 import networkx as nx
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 
@@ -12,7 +13,12 @@ from default import PROTOCOLS, NodeGroup, generate_default_resources
 
 class StorageFullError(Exception):
     pass
-# Global logger setup
+
+
+def _gb_to_bytes(val):
+    """Interpret a numeric storage value as GB and convert to bytes."""
+    return int(val * (1024 ** 3))
+
 
 
 
@@ -34,7 +40,9 @@ class Node:
         pos: tuple,
         mobility: bool = False,
         resources: dict = None,
-        buffer_size: Optional[int] = None
+        buffer_size: Optional[int] = None,
+        failure_rate: float = 0.0,   # failures per time unit
+        repair_rate:  float = 0.0    # repairs per time unit        
     ):
         self.id = id
         self.env= env
@@ -42,6 +50,9 @@ class Node:
         self.group = group
         self.pos = pos
         self.mobility = mobility
+        self.failure_rate = failure_rate
+        self.repair_rate  = repair_rate 
+        self. max_versions: int = 2       
 
         # Override or generate resource capacities
         if resources is None:
@@ -65,7 +76,7 @@ class Node:
            self.buffer = simpy.Store(env, capacity=buffer_size)
         self.memory_allocated = 0
         self.storage_used = 0
-        self.storage: List['Data'] = []
+        self.storage: Dict[str, List[Data]] = defaultdict(list)
 
     def __repr__(self):
         return (
@@ -78,88 +89,69 @@ class Node:
 
     def store_data(self, data: Data):
         """
-        Store a Data object on the node.
+        Store a Data object on the node, but keep only the newest
+        `max_versions` for each data.name.  If adding this would exceed
+        that, delete the oldest version first.
         """
+        # 1) Prune oldest if we already have max_versions of this name
+        lst = self.storage[data.name]
+        if len(lst)>= self.max_versions:
+            # find and remove the *oldest* (minimum version)
+            oldest = min(lst, key=lambda d: d.version)
+            lst.remove(oldest)
+            self.storage_used -= oldest.size
+
+        # 2) Now store the new one (still enforcing capacity)
         if data.size + self.storage_used > self.storage_capacity:
             raise StorageFullError(
                 f"Node {self.id} storage full: "
                 f"{self.storage_used}/{self.storage_capacity}"
             )
-        self.storage.append(data)
+        # 3) append new
+        lst.append(data)
         self.storage_used += data.size
 
 
     def get_data(self, name: str, version: Optional[int] = None) -> Optional[Data]:
-        """
-        Return the latest Data object with this name (and optional version).
-        """
-        matches = [d for d in self.storage if d.name == name]
-        if version is not None:
-            matches = [d for d in matches if d.version == version]
-        if not matches:
+        """Return the latest (or specific) version from storage[name]."""
+        lst = self.storage.get(name, [])
+        if not lst:
             return None
-        data =max(matches, key=lambda d: d.version)
-        data.last_consult = self.env.now
+        if version is None:
+            # pick highest version
+            data = max(lst, key=lambda d: d.version)
+        else:
+            # find specific
+            matches = [d for d in lst if d.version == version]
+            data = matches[0] if matches else None
+        if data:
+            data.last_consult = self.env.now
         return data
-    
+
 
     def delete_data(self, name: str, version: Optional[int] = None) -> None:
-        """
-        Remove a Data object from this node’s storage.
-        If version is None, deletes the latest version of `name`.
-        Otherwise deletes the specific version.
-        Raises KeyError if no matching data found.
-        """
-        # 1. Find all matching items
-        matches = [
-            d for d in self.storage
-            if d.name == name and (version is None or d.version == version)
-        ]
-        if not matches:
-            raise KeyError(f"No data named {name!r}" +
-                           (f" v{version}" if version is not None else "") +
-                           " on node " + self.id)
-
-        # 2. Pick the one to delete
+        """Remove one version from storage[name]."""
+        lst = self.storage.get(name)
+        if not lst:
+            raise KeyError(f"No data named {name!r} on node {self.id}")
+        # choose which to delete
         if version is None:
-            # delete the lowest-version replica
-            to_del = min(matches, key=lambda d: d.version)
+            # delete *oldest* version
+            to_del = min(lst, key=lambda d: d.version)
         else:
-            # if version is specified, assume only one match
-            to_del = matches[0]
-
-        # 3. Remove it and adjust storage_used
-        self.storage.remove(to_del)
+            matched = [d for d in lst if d.version == version]
+            if not matched:
+                raise KeyError(f"No data named {name!r} v{version} on node {self.id}")
+            to_del = matched[0]
+        lst.remove(to_del)
         self.storage_used -= to_del.size
+        if not lst:
+            # clean up empty entry
+            del self.storage[name]
 
 
 
-    # def compute(self, total_instr: float):
-    #     """
-    #     Withdraw up to total_instr tokens from self.cpu in chunks,
-    #     yielding in the environment until all instructions are consumed.
-    #     """
-    #     remaining     = total_instr
-    #     queue_delay   = 0.0
-    #     compute_time  = 0.0
 
-    #     while remaining > 0:
-    #         # how many tokens can we grab now?
-    #         avail = min(remaining, self.cpu.level)
-    #         if avail > 0:
-    #             yield self.cpu.get(avail)
-    #             t_chunk = avail / self.cpu_capacity
-    #             compute_time += t_chunk
-    #             yield self.env.timeout(compute_time)
-    #             yield self.cpu.put(avail)
-    #             remaining -= avail
-    #         else:
-    #             # wait for the container to refill
-    #             yield self.cpu.get(remaining)
-    #             compute_time = remaining / self.cpu_capacity
-    #             yield self.env.timeout(compute_time)
-    #             yield self.cpu.put(remaining)
-    #             break
 
     
 
@@ -253,7 +245,18 @@ class Topology:
             raise ValueError(f"Invalid node group '{node['group']}' for node {nid}")
 
         mobility = node.get('mobility', False)
-        resources = node.get('resources') or generate_default_resources(group)
+        resources = node.get("resources")
+        if resources is None:
+            resources = generate_default_resources(group)   # existing call
+        else:
+            resources = dict(resources)  # shallow copy to avoid mutating the caller
+
+        # Normalize storage: interpret topology JSON 'storage' as GB → convert to bytes
+        if "storage" in resources and isinstance(resources["storage"], (int, float)):
+            resources["storage"] = _gb_to_bytes(resources["storage"])
+        fr = node.get("failure_rate", 0.0)
+        rr = node.get("repair_rate", 0.0)
+
 
         node_obj = Node(
             env=self.env,
@@ -263,7 +266,9 @@ class Topology:
             pos= pos, 
             mobility= mobility,
             resources=resources,
-            buffer_size = node.get("buffer_size", None)
+            buffer_size = node.get("buffer_size", None),
+            failure_rate=fr,
+            repair_rate=rr
         )
 
         # Store only the Node object; all access goes through it
@@ -286,6 +291,9 @@ class Topology:
         data['length'] = dist
         data['PrD'] = dist/data["prop_speed"]
         data['cost'] = 1.0 / data["BW"]
+        data['failure_rate'] = float(attributes.get('failure_rate', 0.0))
+        data['repair_rate']  = float(attributes.get('repair_rate', 0.0))
+
         self.G.add_edge(u, v, **data)
         return self.G.number_of_edges()
 
@@ -310,16 +318,16 @@ class Topology:
 
         color_map = {
             'cloud':   '#FFB84C',
-            'fognode': '#C4E1F6',
-            'edgenode': '#FDE49E',
+            'fog': '#C4E1F6',
+            'edge': '#FDE49E',
             'smartobject': '#39B5E0',
             'sensor':  '#00DFA2',
             'actuator': '#DA0C81',
         }
         size_map = {
             'cloud':   1200,
-            'fognode': 1000,
-            'edgenode': 800,
+            'fog': 1000,
+            'edge': 800,
             'smartobject': 600,
             'sensor':  300,
             'actuator': 300,

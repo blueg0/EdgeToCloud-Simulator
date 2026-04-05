@@ -17,11 +17,11 @@ from typing import Any, Callable, Dict, Set, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core import Core
-    from servicesManager import DeploymentManager
+    from servicesManager import ServicesManager
 from distributions import ExponentialDistribution, DeterministicDistribution, UniformDistribution
 import simpy
 from enum import Enum, auto
-from serviceSelection import SelectionStrategy
+
 
 class MessageType(Enum):
     APP         = auto()   # normal inter–service traffic
@@ -128,7 +128,7 @@ class Message:
         self.src_node      = src_node
         self.dst_node      = dst_node
         self.path          = []
-        self.next_hop_idx  = 0
+        self.next_hop_idx  = 1
         self.data_name     = data_name
         self.message_type  = message_type
 
@@ -177,7 +177,13 @@ class GenerationService(Service):
 
         while True:
            # 1) Wait
-            yield env.timeout(self.distribution())
+            try : 
+                yield env.timeout(self.distribution())
+            except simpy.Interrupt:
+                logger.info(f"{env.now:8.5f}s  GENERATOR-INTERRUPT  "
+                            f"{self.name}@{node_id}")
+                # stop the loop
+                break
 
             # 2) Build a Data object
             
@@ -245,9 +251,14 @@ class ProcessingServices(Service) :
         wait_events = []
 
         for data_name in self.external_data:
-            ev = core._select_data(service= self.name, data_name=data_name, src_node=node_id)
-            wait_events.append(ev)
-
+            node_obj = core.topology.get_node(node_id=node_id)
+            if node_obj.get_data(data_name) is None:
+                ev = core._select_data(service= self.name, data_name=data_name, src_node=node_id)
+                wait_events.append(ev)
+            else :
+                logger.info(
+                    f"{data_name} ALREADY at {node_id} "
+                )    
         # 1) Wait for *all* of them (if any)
         if wait_events:
             all_res = yield AllOf(env, wait_events)
@@ -266,7 +277,12 @@ class ProcessingServices(Service) :
         arrival = env.now
         
         node_obj = core.topology.get_node(node_id)
-        yield  node_obj.cpu.get(msg.instructions)
+        cpu_speed     = node_obj.cpu_capacity
+        if msg.instructions > cpu_speed:
+            a = cpu_speed
+        else : 
+            a=msg.instructions
+        yield node_obj.cpu.get(a)
 
         queuing = env.now - arrival
         start_compute = env.now
@@ -286,10 +302,10 @@ class ProcessingServices(Service) :
             "dst_node":    node_id,
             "application": msg.link.app
         })
-        cpu_speed     = node_obj.cpu_capacity
+        
         compute_time  = msg.instructions / cpu_speed
         yield env.timeout(compute_time)
-        yield node_obj.cpu.put(msg.instructions)
+        yield node_obj.cpu.put(a)
         finish = env.now
         logger.info(
             f"{finish:8.5f}s  PROC_END  "
@@ -341,9 +357,7 @@ class ProcessingServices(Service) :
             core.send_message(out)
 
 
-# class BatchProcessingService(Service):
-#     pass    
-    
+
 
 
 class Application:
@@ -356,7 +370,7 @@ class Application:
         self.services: Dict[str, Service] = {}
         self.links:    List[ServiceLink]  = []
         self.sources:  Set[str]           = set()
-        self.deployer: Optional[DeploymentManager] = None
+        self.deployer: Optional[ServicesManager] = None
 
     def add_service(self, svc: Service):
         if svc.name in self.services:
