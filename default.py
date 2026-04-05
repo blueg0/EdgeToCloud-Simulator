@@ -61,7 +61,7 @@ def generate_default_resources(group: 'NodeGroup') -> Dict[str, int]:
 C = 3e8  
 
 PROTOCOLS = {
-    "wifi_4":        {"BW": 54,      "prop_speed": C/1.0003,  "tx_power": 1.5,   "rx_power": 1,     "idle_power": 0.8,    "sleep_power": 0.1,     },
+    "wifi_4":        {"BW": 50,      "prop_speed": C/1.0003,  "tx_power": 1.5,   "rx_power": 1,     "idle_power": 0.8,    "sleep_power": 0.1,     },
     "wifi_5":        {"BW": 1300,    "prop_speed": C/1.0003,  "tx_power": 2,     "rx_power": 1.5,   "idle_power": 1,      "sleep_power": 0.2,     },
     "wifi_6":        {"BW": 2400,    "prop_speed": C/1.0003,  "tx_power": 2.5,   "rx_power": 2,     "idle_power": 1.2,    "sleep_power": 0.3,     },
     "ble":           {"BW": 1,       "prop_speed": C/1.0003,  "tx_power": 0.01,  "rx_power": 0.01,  "idle_power": 0.005,  "sleep_power": 0.001,   },
